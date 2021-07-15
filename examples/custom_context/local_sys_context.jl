@@ -27,7 +27,7 @@ end
 Return a vector of headers to which those missing dependent headers are added.
 """
 function find_dependent_headers(headers::Vector{T}, args::Vector, general_ops::Dict) where {T<:AbstractString}
-    blacklist = get(general_ops, "header_blacklist", [])
+    denylist = get(general_ops, "header_denylist", [])
     flags = CXTranslationUnit_DetailedPreprocessingRecord
     flags |= CXTranslationUnit_SkipFunctionBodies
     all_headers = copy(headers)
@@ -54,7 +54,7 @@ function find_dependent_headers(headers::Vector{T}, args::Vector, general_ops::D
                     if startswith(header_dir, dir) || startswith(dir, header_dir)
                         isempty(header_dir) && continue
                         file_name ∈ new_headers && continue
-                        if any(x->!isempty(x) && endswith(file_name, x), blacklist)
+                        if any(x->!isempty(x) && endswith(file_name, x), denylist)
                             file_name ∉ blocked_headers && push!(blocked_headers, file_name)
                             continue
                         end
@@ -72,7 +72,7 @@ function find_dependent_headers(headers::Vector{T}, args::Vector, general_ops::D
     end
 
     for file in blocked_headers
-        @info "skipped a dependent file: $file because it's in the blacklist."
+        @info "skipped a dependent file: $file because it's in the denylist."
     end
 
     return normpath.(dependent_headers)
